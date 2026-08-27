@@ -4,11 +4,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>CARTEL WEST66</title>
+<title>NEON CITY STORE</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.cdnfonts.com/css/pricedown" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <style>
 :root{
@@ -465,6 +467,14 @@ body{
 .admin-product-row .info{ flex:1; min-width:0; }
 .admin-product-row .info h4{ font-size:.95rem; }
 .admin-product-row .info p{ color:var(--muted); font-size:.72rem; margin-top:2px; }
+.admin-taxonomy-row{
+    display:flex; align-items:center; gap:10px; padding:8px 10px; background:rgba(255,255,255,.03);
+    border-radius:12px; margin-bottom:8px; border:1px solid rgba(255,255,255,.06);
+}
+.admin-taxonomy-row input{
+    flex:1; padding:9px 12px; color:white; background:rgba(9,11,20,.9);
+    border:1px solid rgba(255,255,255,.1); border-radius:10px; outline:none; font-size:.88rem;
+}
 .admin-icon-btn{
     width:34px; height:34px; border-radius:9px; border:1px solid rgba(255,255,255,.12);
     background:rgba(255,255,255,.05); color:white; display:flex; align-items:center; justify-content:center;
@@ -759,6 +769,26 @@ body{
         </div>
 
         <div class="admin-block">
+            <h3><i class="fas fa-layer-group"></i> Catégories</h3>
+            <div id="admin-categories-list"></div>
+            <div class="admin-media-add-row">
+                <input id="new-category-input" type="text" placeholder="Nouvelle catégorie">
+                <button onclick="addCategory()">Ajouter</button>
+            </div>
+            <div class="admin-hint">Modifie un nom directement dans le champ (Entrée ou clic ailleurs pour valider) — les produits concernés sont mis à jour automatiquement.</div>
+        </div>
+
+        <div class="admin-block">
+            <h3><i class="fas fa-tags"></i> Collections</h3>
+            <div id="admin-collections-list"></div>
+            <div class="admin-media-add-row">
+                <input id="new-collection-input" type="text" placeholder="Nouvelle collection">
+                <button onclick="addCollection()">Ajouter</button>
+            </div>
+            <div class="admin-hint">Modifie un nom directement dans le champ (Entrée ou clic ailleurs pour valider) — les produits concernés sont mis à jour automatiquement.</div>
+        </div>
+
+        <div class="admin-block">
             <h3><i class="fas fa-truck"></i> Infos livraison</h3>
             <div class="form-group" style="margin-bottom:10px;">
                 <textarea id="admin-delivery-text" rows="4" placeholder="Ex: Livraison sur Perpignan, du lundi au samedi, sous 24 à 48h..."></textarea>
@@ -789,11 +819,11 @@ body{
         </div>
         <div class="form-group">
             <label>Catégorie</label>
-            <input id="ae-category" type="text" placeholder="Ex: Graphique, Basique, Nouveauté...">
+            <select id="ae-category"></select>
         </div>
         <div class="form-group">
             <label>Collection</label>
-            <input id="ae-collection" type="text" placeholder="Ex: Urban, Elite, Original...">
+            <select id="ae-collection"></select>
         </div>
         <div class="form-group">
             <label>Étiquette (optionnel)</label>
@@ -913,11 +943,14 @@ const defaultCatalog = [
     }
 ];
 const defaultDeliveryInfo = "Livraison à Perpignan et ses alentours. Contacte-nous pour connaître les délais actuels.";
+const defaultCategories = ["Basique", "Graphique", "Nouveauté"];
+const defaultCollections = ["Urban", "Elite", "Original"];
 
 /* =========================================================
    ADMIN — geste secret + PIN (jamais visible pour les autres)
    ========================================================= */
 const ADMIN_PIN = "2468"; // <-- Change ce code avant de publier ta mini app
+const ORDERS_USERNAME = "cartelwest"; // <-- Nom d'utilisateur Telegram (sans le @) qui recevra les commandes
 let isAdminUnlocked = false;
 let tapCount = 0;
 let tapTimer = null;
@@ -999,6 +1032,8 @@ function unlockAdmin(){
         document.getElementById("bottom-nav").appendChild(navAdmin);
     }
     renderAdminProducts();
+    renderAdminCategories();
+    renderAdminCollections();
     document.getElementById("admin-delivery-text").value = deliveryInfo;
     if(tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
     showToast("🔓 Espace admin déverrouillé");
@@ -1016,24 +1051,55 @@ function lockAdmin(){
 /* =========================================================
    BASE DE DONNÉES (window.storage — partagée, persiste entre sessions)
    ========================================================= */
+/* =========================================================
+   BASE DE DONNÉES — Firebase Firestore (persiste pour de vrai, accessible depuis GitHub)
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyBRGU3D-snPS6ZijQZuXA-VVd_OeunHc5E",
+  authDomain: "cartelwest66-c3334.firebaseapp.com",
+  projectId: "cartelwest66-c3334",
+  storageBucket: "cartelwest66-c3334.firebasestorage.app",
+  messagingSenderId: "523142438368",
+  appId: "1:523142438368:web:6c080ee8bbb87f958b9f85"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storeDocRef = db.collection("ncs_store").doc("main");
+
 let catalog = [];
 let deliveryInfo = defaultDeliveryInfo;
+let categories = [];
+let collections = [];
 let nextProductId = 1;
 
 async function loadData(){
     try{
-        const res = await window.storage.get("ncs_products", true);
-        catalog = res && res.value ? JSON.parse(res.value) : defaultCatalog;
+        const snap = await storeDocRef.get();
+        if(snap.exists){
+            const data = snap.data();
+            catalog = data.products ? JSON.parse(data.products) : defaultCatalog;
+            deliveryInfo = data.deliveryInfo || defaultDeliveryInfo;
+            categories = data.categories ? JSON.parse(data.categories) : defaultCategories;
+            collections = data.collections ? JSON.parse(data.collections) : defaultCollections;
+        }else{
+            catalog = defaultCatalog;
+            deliveryInfo = defaultDeliveryInfo;
+            categories = defaultCategories;
+            collections = defaultCollections;
+            await storeDocRef.set({
+                products: JSON.stringify(defaultCatalog),
+                deliveryInfo: defaultDeliveryInfo,
+                categories: JSON.stringify(defaultCategories),
+                collections: JSON.stringify(defaultCollections)
+            });
+        }
     }catch(e){
+        console.error("Erreur de connexion à Firebase :", e);
         catalog = defaultCatalog;
-        try{ await window.storage.set("ncs_products", JSON.stringify(defaultCatalog), true); }catch(e2){}
-    }
-    try{
-        const res2 = await window.storage.get("ncs_delivery_info", true);
-        deliveryInfo = res2 && res2.value ? res2.value : defaultDeliveryInfo;
-    }catch(e){
         deliveryInfo = defaultDeliveryInfo;
-        try{ await window.storage.set("ncs_delivery_info", defaultDeliveryInfo, true); }catch(e2){}
+        categories = defaultCategories;
+        collections = defaultCollections;
+        showToast("⚠️ Connexion à la base impossible (vérifie les règles Firestore)", true);
     }
     nextProductId = catalog.reduce((max,p)=>Math.max(max,p.id),0) + 1;
     document.getElementById("delivery-info-text").innerText = deliveryInfo;
@@ -1043,9 +1109,24 @@ async function loadData(){
 
 async function persistCatalog(){
     try{
-        await window.storage.set("ncs_products", JSON.stringify(catalog), true);
+        await storeDocRef.set({ products: JSON.stringify(catalog) }, { merge: true });
         return true;
     }catch(e){
+        console.error(e);
+        showToast("⚠️ Erreur d'enregistrement, réessaie", true);
+        return false;
+    }
+}
+
+async function persistTaxonomy(){
+    try{
+        await storeDocRef.set({
+            categories: JSON.stringify(categories),
+            collections: JSON.stringify(collections)
+        }, { merge: true });
+        return true;
+    }catch(e){
+        console.error(e);
         showToast("⚠️ Erreur d'enregistrement, réessaie", true);
         return false;
     }
@@ -1054,10 +1135,8 @@ async function persistCatalog(){
 function populateFilterOptions(){
     const catSelect = document.getElementById("filter-category");
     const colSelect = document.getElementById("filter-farm");
-    const cats = [...new Set(catalog.map(p=>p.category).filter(Boolean))];
-    const cols = [...new Set(catalog.map(p=>p.collection).filter(Boolean))];
-    catSelect.innerHTML = `<option value="all">Toutes catégories</option>` + cats.map(c=>`<option value="${c}">${c}</option>`).join("");
-    colSelect.innerHTML = `<option value="all">Toutes collections</option>` + cols.map(c=>`<option value="${c}">${c}</option>`).join("");
+    catSelect.innerHTML = `<option value="all">Toutes catégories</option>` + categories.map(c=>`<option value="${c}">${c}</option>`).join("");
+    colSelect.innerHTML = `<option value="all">Toutes collections</option>` + collections.map(c=>`<option value="${c}">${c}</option>`).join("");
 }
 
 let cart = [];
@@ -1345,6 +1424,31 @@ function handleMainButton(){
     else if(currentView==="checkout") submitOrder();
 }
 
+function buildOrderMessage(order){
+    const itemsList = order.items
+        .map(item => `• ${item.title} — ${item.price.toFixed(2)}€`)
+        .join("\n");
+
+    return `🆕 NOUVELLE COMMANDE\n\n` +
+        `👤 Client : ${order.user.name}\n` +
+        `📱 Téléphone : ${order.user.phone}\n` +
+        `🏠 Adresse : ${order.user.address}\n` +
+        (order.user.notes ? `📝 Notes : ${order.user.notes}\n` : "") +
+        (order.user.username ? `💬 Telegram : @${order.user.username}\n` : "") +
+        `\n🛒 Articles :\n${itemsList}\n\n` +
+        `💰 Total : ${order.totalPrice.toFixed(2)}€`;
+}
+
+function openOrderChat(orderData){
+    const text = buildOrderMessage(orderData);
+    const url = `https://t.me/${ORDERS_USERNAME}?text=${encodeURIComponent(text)}`;
+    if(tg?.openTelegramLink){
+        tg.openTelegramLink(url);
+    } else {
+        window.open(url, "_blank");
+    }
+}
+
 function submitOrder(){
     const name = document.getElementById("client-name").value.trim();
     const phone = document.getElementById("client-phone").value.trim();
@@ -1368,15 +1472,16 @@ function submitOrder(){
     userOrdersCount++;
     updateLoyaltyStats(total);
 
+    openOrderChat(orderData);
+
     cart = [];
     updateCart();
     switchView("home");
 
     if(tg?.sendData){
-        tg.sendData(JSON.stringify(orderData));
-    } else {
-        showToast("🎉 Commande validée pour Perpignan avec succès !");
+        try{ tg.sendData(JSON.stringify(orderData)); }catch(e){ /* sendData ne fonctionne que si la mini app a été ouverte via le bouton clavier du bot */ }
     }
+    showToast("📨 Ouvre la conversation Telegram et appuie sur Envoyer pour valider ta commande !");
 }
 
 function updateLoyaltyStats(spentAmount){
@@ -1443,8 +1548,7 @@ function openAdminEdit(id){
 
     document.getElementById("admin-edit-title").innerText = product ? "MODIFIER LE PRODUIT" : "AJOUTER UN PRODUIT";
     document.getElementById("ae-title").value = product?.title || "";
-    document.getElementById("ae-category").value = product?.category || "";
-    document.getElementById("ae-collection").value = product?.collection || "";
+    populateAdminEditTaxonomySelects(product?.category || "", product?.collection || "");
     document.getElementById("ae-badge").value = product?.badge || "";
     document.getElementById("ae-desc").value = product?.desc || "";
 
@@ -1538,6 +1642,169 @@ function addMediaFromGallery(event){
     event.target.value = "";
 }
 
+function populateAdminEditTaxonomySelects(currentCategory, currentCollection){
+    const catSelect = document.getElementById("ae-category");
+    const colSelect = document.getElementById("ae-collection");
+
+    let catOptions = [...categories];
+    if(currentCategory && !catOptions.includes(currentCategory)) catOptions.push(currentCategory);
+    catSelect.innerHTML = catOptions.length
+        ? catOptions.map(c=>`<option value="${c}">${c}</option>`).join("")
+        : `<option value="">Aucune catégorie créée</option>`;
+    catSelect.value = currentCategory || catOptions[0] || "";
+
+    let colOptions = [...collections];
+    if(currentCollection && !colOptions.includes(currentCollection)) colOptions.push(currentCollection);
+    colSelect.innerHTML = colOptions.length
+        ? colOptions.map(c=>`<option value="${c}">${c}</option>`).join("")
+        : `<option value="">Aucune collection créée</option>`;
+    colSelect.value = currentCollection || colOptions[0] || "";
+}
+
+function renderAdminCategories(){
+    const list = document.getElementById("admin-categories-list");
+    list.innerHTML = "";
+    if(!categories.length){
+        list.innerHTML = `<div class="admin-hint">Aucune catégorie pour le moment.</div>`;
+        return;
+    }
+    categories.forEach((cat, index)=>{
+        const row = document.createElement("div");
+        row.className = "admin-taxonomy-row";
+        row.innerHTML = `
+            <input type="text" value="${cat}" onchange="renameCategory(${index}, this.value)">
+            <div class="admin-icon-btn danger" onclick="deleteCategory(${index})"><i class="fas fa-trash-can"></i></div>
+        `;
+        list.appendChild(row);
+    });
+}
+
+function renderAdminCollections(){
+    const list = document.getElementById("admin-collections-list");
+    list.innerHTML = "";
+    if(!collections.length){
+        list.innerHTML = `<div class="admin-hint">Aucune collection pour le moment.</div>`;
+        return;
+    }
+    collections.forEach((col, index)=>{
+        const row = document.createElement("div");
+        row.className = "admin-taxonomy-row";
+        row.innerHTML = `
+            <input type="text" value="${col}" onchange="renameCollection(${index}, this.value)">
+            <div class="admin-icon-btn danger" onclick="deleteCollection(${index})"><i class="fas fa-trash-can"></i></div>
+        `;
+        list.appendChild(row);
+    });
+}
+
+async function addCategory(){
+    const input = document.getElementById("new-category-input");
+    const name = input.value.trim();
+    if(!name){ showToast("⚠️ Entre un nom de catégorie", true); return; }
+    if(categories.includes(name)){ showToast("⚠️ Cette catégorie existe déjà", true); return; }
+    categories.push(name);
+    const ok = await persistTaxonomy();
+    if(ok){
+        input.value = "";
+        renderAdminCategories();
+        populateFilterOptions();
+        showToast("✅ Catégorie ajoutée");
+    }
+}
+
+async function renameCategory(index, newValue){
+    const oldValue = categories[index];
+    newValue = newValue.trim();
+    if(!newValue || newValue === oldValue){ renderAdminCategories(); return; }
+    if(categories.includes(newValue)){ showToast("⚠️ Ce nom existe déjà", true); renderAdminCategories(); return; }
+
+    categories[index] = newValue;
+    catalog.forEach(p=>{ if(p.category === oldValue) p.category = newValue; });
+
+    const ok = await persistTaxonomy() && await persistCatalog();
+    if(ok){
+        populateFilterOptions();
+        renderProducts();
+        renderAdminProducts();
+        showToast("✅ Catégorie modifiée");
+    }
+}
+
+async function deleteCategory(index){
+    const cat = categories[index];
+    const inUse = catalog.some(p=>p.category === cat);
+    const message = inUse
+        ? `Supprimer "${cat}" ? Les produits concernés deviendront "non catégorisés".`
+        : `Supprimer la catégorie "${cat}" ?`;
+    if(!confirm(message)) return;
+
+    categories.splice(index,1);
+    catalog.forEach(p=>{ if(p.category === cat) p.category = ""; });
+
+    const ok = await persistTaxonomy() && await persistCatalog();
+    if(ok){
+        populateFilterOptions();
+        renderProducts();
+        renderAdminProducts();
+        renderAdminCategories();
+        showToast("🗑️ Catégorie supprimée");
+    }
+}
+
+async function addCollection(){
+    const input = document.getElementById("new-collection-input");
+    const name = input.value.trim();
+    if(!name){ showToast("⚠️ Entre un nom de collection", true); return; }
+    if(collections.includes(name)){ showToast("⚠️ Cette collection existe déjà", true); return; }
+    collections.push(name);
+    const ok = await persistTaxonomy();
+    if(ok){
+        input.value = "";
+        renderAdminCollections();
+        populateFilterOptions();
+        showToast("✅ Collection ajoutée");
+    }
+}
+
+async function renameCollection(index, newValue){
+    const oldValue = collections[index];
+    newValue = newValue.trim();
+    if(!newValue || newValue === oldValue){ renderAdminCollections(); return; }
+    if(collections.includes(newValue)){ showToast("⚠️ Ce nom existe déjà", true); renderAdminCollections(); return; }
+
+    collections[index] = newValue;
+    catalog.forEach(p=>{ if(p.collection === oldValue) p.collection = newValue; });
+
+    const ok = await persistTaxonomy() && await persistCatalog();
+    if(ok){
+        populateFilterOptions();
+        renderProducts();
+        renderAdminProducts();
+        showToast("✅ Collection modifiée");
+    }
+}
+
+async function deleteCollection(index){
+    const col = collections[index];
+    const inUse = catalog.some(p=>p.collection === col);
+    const message = inUse
+        ? `Supprimer "${col}" ? Les produits concernés n'auront plus de collection.`
+        : `Supprimer la collection "${col}" ?`;
+    if(!confirm(message)) return;
+
+    collections.splice(index,1);
+    catalog.forEach(p=>{ if(p.collection === col) p.collection = ""; });
+
+    const ok = await persistTaxonomy() && await persistCatalog();
+    if(ok){
+        populateFilterOptions();
+        renderProducts();
+        renderAdminProducts();
+        renderAdminCollections();
+        showToast("🗑️ Collection supprimée");
+    }
+}
+
 async function saveProductFromAdmin(){
     const title = document.getElementById("ae-title").value.trim();
     if(!title){ showToast("⚠️ Le titre est obligatoire", true); return; }
@@ -1592,11 +1859,12 @@ async function deleteAdminProduct(id){
 async function saveDeliveryInfo(){
     const text = document.getElementById("admin-delivery-text").value.trim();
     try{
-        await window.storage.set("ncs_delivery_info", text, true);
+        await storeDocRef.set({ deliveryInfo: text }, { merge: true });
         deliveryInfo = text;
         document.getElementById("delivery-info-text").innerText = text;
         showToast("✅ Infos livraison enregistrées");
     }catch(e){
+        console.error(e);
         showToast("⚠️ Erreur d'enregistrement", true);
     }
 }
