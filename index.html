@@ -161,10 +161,10 @@ body{
 }
 .product:hover{ transform:translateY(-3px); border-color:var(--cyan); }
 
-.product-image{ position:relative; aspect-ratio:1/1; overflow:hidden; }
+.product-image{ position:relative; aspect-ratio:4/5; overflow:hidden; }
 .product-image img{ width:100%; height:100%; object-fit:cover; transition:.5s; }
 .product:hover img{ transform:scale(1.08); }
-.product-image::after{ content:""; position:absolute; inset:0; background:linear-gradient(transparent 40%, rgba(0,0,0,.75)); }
+.product-image::after{ content:""; position:absolute; inset:0; background:linear-gradient(transparent 55%, rgba(0,0,0,.8)); }
 
 .badge{
     position:absolute; top:8px; left:8px; z-index:3; padding:4px 8px; border-radius:6px;
@@ -173,6 +173,8 @@ body{
 .badge-promo{ background:var(--pink); color:white; }
 .badge-video{ background:var(--cyan); color:black; }
 .badge-top{ background:var(--yellow); color:black; }
+.badge-new{ background:var(--green); color:black; }
+.badge-purple{ background:var(--purple); color:white; }
 
 .like{ position:absolute; top:9px; right:9px; z-index:3; font-size:1.1rem; filter:drop-shadow(0 2px 5px black); color: white; cursor: pointer; }
 .like.fas { color: var(--pink); filter: drop-shadow(0 0 8px var(--pink)); }
@@ -209,9 +211,27 @@ body{
     border-radius:24px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.8), 0 0 25px rgba(0,229,255,0.15);
     max-height:88vh; display:flex; flex-direction:column;
 }
-.modal-media-wrapper{ position:relative; width:100%; aspect-ratio:16/10; background:#000; }
+.modal-media-wrapper{ position:relative; width:100%; aspect-ratio:4/5; background:#000; cursor:zoom-in; }
 .modal-media-wrapper img, .modal-media-wrapper video{ width:100%; height:100%; object-fit:cover; display:none; }
 .modal-media-wrapper img.active-media, .modal-media-wrapper video.active-media{ display:block; }
+.modal-zoom-hint{
+    position:absolute; bottom:10px; right:10px; z-index:5; background:rgba(0,0,0,.6); color:white;
+    width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:.85rem; pointer-events:none; backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,.15);
+}
+
+.lightbox-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.95); z-index:600; display:none;
+    align-items:center; justify-content:center; padding:20px;
+}
+.lightbox-overlay.show{ display:flex; }
+.lightbox-content{ max-width:100%; max-height:100%; display:flex; align-items:center; justify-content:center; }
+.lightbox-content img, .lightbox-content video{ max-width:100%; max-height:85vh; border-radius:12px; object-fit:contain; }
+.lightbox-close{
+    position:absolute; top:20px; right:20px; width:40px; height:40px; border-radius:50%;
+    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.25); color:white;
+    display:flex; align-items:center; justify-content:center; font-size:1.1rem; cursor:pointer; z-index:10;
+}
 
 .modal-thumbnails {
     display: flex; gap: 8px; padding: 10px 15px; background: rgba(3,5,10,0.8);
@@ -323,6 +343,12 @@ body{
 }
 .reel-action-btn.tg { background: linear-gradient(135deg, #229ed9, #1b85b8); color: white; box-shadow: 0 0 20px rgba(34,158,217,0.35); }
 .reel-action-btn.ig { background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #bc1888); color: white; box-shadow: 0 0 20px rgba(220,39,67,0.35); }
+.reel-avatar-inner.tiktok{ color:#fff; }
+.reel-action-btn.tiktok{ background:linear-gradient(135deg,#010101,#25F4EE,#FE2C55); color:white; box-shadow:0 0 20px rgba(37,244,238,0.25); }
+.reel-avatar-inner.snap{ color:#FFFC00; }
+.reel-action-btn.snap{ background:#FFFC00; color:#111; box-shadow:0 0 20px rgba(255,252,0,0.25); }
+.reel-avatar-inner.other{ color:var(--cyan); }
+.reel-action-btn.other{ background:linear-gradient(135deg, var(--cyan), var(--purple)); color:white; box-shadow:0 0 20px rgba(0,229,255,0.25); }
 .reel-action-btn:active { transform: scale(0.97); }
 
 /* INFOS LOCALES */
@@ -667,57 +693,12 @@ body{
     <h1 class="page-title gta-font">
         <i class="fas fa-play-circle"></i> CANAL & VIDÉOS
     </h1>
-    <div class="reels-container">
-
-        <div class="reel-card">
-            <div class="reel-media-box">
-                <span class="reel-badge">OFFICIEL</span>
-                <video src="https://www.w3schools.com/html/mov_bbb.mp4" autoplay muted loop playsinline></video>
-            </div>
-            <div class="reel-body">
-                <div class="reel-profile-row">
-                    <div class="reel-avatar-ring">
-                        <div class="reel-avatar-inner tg"><i class="fab fa-telegram-plane"></i></div>
-                    </div>
-                    <div class="reel-meta">
-                        <h3 class="gta-font">Canal Telegram</h3>
-                        <p>Communauté principale</p>
-                    </div>
-                </div>
-                <p class="reel-text">Rejoins notre canal pour ne rien rater des nouvelles collections, des drops en exclusivité et des codes promos.</p>
-                <a href="https://t.me/" target="_blank" class="reel-action-btn tg gta-font">
-                    <i class="fab fa-telegram-plane"></i> Rejoindre le Canal
-                </a>
-            </div>
-        </div>
-
-        <div class="reel-card">
-            <div class="reel-media-box">
-                <span class="reel-badge">LOOKBOOK</span>
-                <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=700" alt="Aperçu visuel">
-            </div>
-            <div class="reel-body">
-                <div class="reel-profile-row">
-                    <div class="reel-avatar-ring">
-                        <div class="reel-avatar-inner ig"><i class="fab fa-instagram"></i></div>
-                    </div>
-                    <div class="reel-meta">
-                        <h3 class="gta-font">Instagram</h3>
-                        <p>Photos & avis clients</p>
-                    </div>
-                </div>
-                <p class="reel-text">Découvre les visuels des t-shirts en haute qualité, les portés de la communauté et les nouveautés en story.</p>
-                <a href="https://instagram.com/" target="_blank" class="reel-action-btn ig gta-font">
-                    <i class="fab fa-instagram"></i> Suivre sur Instagram
-                </a>
-            </div>
-        </div>
-
+    <div class="reels-container" id="reels-container"></div>
+    <div class="reels-container" style="padding-top:0">
         <div class="info-card">
             <h3 class="gta-font"><i class="fas fa-location-dot"></i> Livraison</h3>
             <div id="delivery-info-text" class="info-text">Livraison à Perpignan et ses alentours. Contacte-nous pour connaître les délais actuels.</div>
         </div>
-
     </div>
 </section>
 
@@ -789,6 +770,29 @@ body{
         </div>
 
         <div class="admin-block">
+            <h3><i class="fas fa-tag"></i> Étiquettes produits</h3>
+            <div id="admin-badges-list"></div>
+            <div class="admin-media-add-row">
+                <input id="new-badge-input" type="text" placeholder="Nouvelle étiquette (ex: PROMO)">
+                <select id="new-badge-color" style="max-width:110px; flex:0 0 auto;">
+                    <option value="badge-promo">Rose</option>
+                    <option value="badge-video">Cyan</option>
+                    <option value="badge-top">Jaune</option>
+                    <option value="badge-new">Vert</option>
+                    <option value="badge-purple">Violet</option>
+                </select>
+                <button onclick="addBadge()">Ajouter</button>
+            </div>
+            <div class="admin-hint">Change le texte ou la couleur directement dans la ligne — les produits concernés se mettent à jour automatiquement.</div>
+        </div>
+
+        <div class="admin-block">
+            <h3><i class="fas fa-share-nodes"></i> Réseaux sociaux</h3>
+            <div id="admin-socials-list"></div>
+            <button class="admin-add-btn" onclick="openSocialEdit(null)"><i class="fas fa-plus"></i> Ajouter un réseau</button>
+        </div>
+
+        <div class="admin-block">
             <h3><i class="fas fa-truck"></i> Infos livraison</h3>
             <div class="form-group" style="margin-bottom:10px;">
                 <textarea id="admin-delivery-text" rows="4" placeholder="Ex: Livraison sur Perpignan, du lundi au samedi, sous 24 à 48h..."></textarea>
@@ -827,13 +831,7 @@ body{
         </div>
         <div class="form-group">
             <label>Étiquette (optionnel)</label>
-            <select id="ae-badge">
-                <option value="">Aucune</option>
-                <option value="PROMO">PROMO</option>
-                <option value="TOP">TOP</option>
-                <option value="VIDÉO">VIDÉO</option>
-                <option value="NOUVEAU">NOUVEAU</option>
-            </select>
+            <select id="ae-badge"></select>
         </div>
         <div class="form-group">
             <label>Description</label>
@@ -858,6 +856,67 @@ body{
 
         <button class="admin-save-btn" onclick="saveProductFromAdmin()"><i class="fas fa-floppy-disk"></i> Enregistrer le produit</button>
     </div>
+</div>
+
+<!-- MODAL EDITION RÉSEAU (ADMIN) -->
+<div class="admin-edit-overlay" id="admin-edit-social-modal">
+    <div class="admin-edit-card">
+        <div class="admin-edit-header">
+            <h3 id="se-edit-title" class="gta-font">AJOUTER UN RÉSEAU</h3>
+            <div class="modal-close" style="position:static;" onclick="closeSocialEdit()"><i class="fas fa-times"></i></div>
+        </div>
+
+        <div class="form-group">
+            <label>Type de réseau</label>
+            <select id="se-network">
+                <option value="telegram">Telegram</option>
+                <option value="instagram">Instagram</option>
+                <option value="tiktok">TikTok</option>
+                <option value="snapchat">Snapchat</option>
+                <option value="autre">Autre</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Étiquette sur l'image (optionnel)</label>
+            <input id="se-badge" type="text" placeholder="Ex: OFFICIEL, LOOKBOOK...">
+        </div>
+        <div class="form-group">
+            <label>Titre</label>
+            <input id="se-title" type="text" placeholder="Ex: Canal Telegram">
+        </div>
+        <div class="form-group">
+            <label>Sous-titre</label>
+            <input id="se-subtitle" type="text" placeholder="Ex: Communauté principale">
+        </div>
+        <div class="form-group">
+            <label>Texte descriptif</label>
+            <textarea id="se-text" rows="3" placeholder="Décris ce que le client va trouver..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>Lien (URL)</label>
+            <input id="se-url" type="text" placeholder="https://t.me/CartelWest66">
+        </div>
+
+        <label style="display:block; color:var(--muted); font-size:.8rem; margin-bottom:7px;">Image ou vidéo</label>
+        <div id="se-media-preview"></div>
+        <div class="admin-media-add-row">
+            <input id="se-media-url" type="text" placeholder="Coller une URL image ou vidéo">
+            <button onclick="setSocialMediaFromUrl()">Utiliser</button>
+        </div>
+        <label class="admin-gallery-btn" for="se-media-file">
+            <i class="fas fa-images"></i> Choisir une photo depuis la galerie
+        </label>
+        <input id="se-media-file" type="file" accept="image/*" style="display:none" onchange="setSocialMediaFromGallery(event)">
+        <div class="admin-hint">Pour une vidéo, colle un lien (ex: hébergé sur GitHub, YouTube...) — les vidéos ne peuvent pas être importées depuis la galerie ici (trop lourdes pour la base).</div>
+
+        <button class="admin-save-btn" onclick="saveSocialFromAdmin()"><i class="fas fa-floppy-disk"></i> Enregistrer le réseau</button>
+    </div>
+</div>
+
+<!-- LIGHTBOX PLEIN ÉCRAN (visualisation des médias produits) -->
+<div class="lightbox-overlay" id="lightbox-overlay" onclick="closeLightbox(event)">
+    <div class="lightbox-close" onclick="closeLightbox(event)"><i class="fas fa-times"></i></div>
+    <div class="lightbox-content" id="lightbox-content"></div>
 </div>
 
 <!-- OVERLAY DE VERROUILLAGE ADMIN (PIN) -->
@@ -934,7 +993,7 @@ const defaultCatalog = [
         ]
     },
     {
-        id:4, title:"Night Drop Tee", category:"Nouveauté", collection:"Urban", badge:"NOUVEAU", badgeClass:"badge-promo",
+        id:4, title:"Night Drop Tee", category:"Nouveauté", collection:"Urban", badge:"NOUVEAU", badgeClass:"badge-new",
         desc:"Dernière sortie de la saison, imprimé exclusif édition limitée.",
         sizes: [ {label:"S", price:28}, {label:"M", price:28}, {label:"L", price:30}, {label:"XL", price:32} ],
         media: [
@@ -945,6 +1004,26 @@ const defaultCatalog = [
 const defaultDeliveryInfo = "Livraison à Perpignan et ses alentours. Contacte-nous pour connaître les délais actuels.";
 const defaultCategories = ["Basique", "Graphique", "Nouveauté"];
 const defaultCollections = ["Urban", "Elite", "Original"];
+const defaultBadges = [
+    { label:"PROMO", colorClass:"badge-promo" },
+    { label:"TOP", colorClass:"badge-top" },
+    { label:"VIDÉO", colorClass:"badge-video" },
+    { label:"NOUVEAU", colorClass:"badge-new" }
+];
+const defaultSocials = [
+    {
+        id:1, network:"telegram", badge:"OFFICIEL", title:"Canal Telegram", subtitle:"Communauté principale",
+        text:"Rejoins notre canal pour ne rien rater des nouvelles collections, des drops en exclusivité et des codes promos.",
+        url:"https://t.me/CartelWest66",
+        media:{ type:"video", url:"https://www.w3schools.com/html/mov_bbb.mp4" }
+    },
+    {
+        id:2, network:"instagram", badge:"LOOKBOOK", title:"Instagram", subtitle:"Photos & avis clients",
+        text:"Découvre les visuels des t-shirts en haute qualité, les portés de la communauté et les nouveautés en story.",
+        url:"https://instagram.com/",
+        media:{ type:"img", url:"https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=700" }
+    }
+];
 
 /* =========================================================
    ADMIN — geste secret + PIN (jamais visible pour les autres)
@@ -1034,6 +1113,8 @@ function unlockAdmin(){
     renderAdminProducts();
     renderAdminCategories();
     renderAdminCollections();
+    renderAdminBadges();
+    renderAdminSocials();
     document.getElementById("admin-delivery-text").value = deliveryInfo;
     if(tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
     showToast("🔓 Espace admin déverrouillé");
@@ -1070,7 +1151,10 @@ let catalog = [];
 let deliveryInfo = defaultDeliveryInfo;
 let categories = [];
 let collections = [];
+let badges = [];
+let socials = [];
 let nextProductId = 1;
+let nextSocialId = 1;
 
 async function loadData(){
     try{
@@ -1081,16 +1165,22 @@ async function loadData(){
             deliveryInfo = data.deliveryInfo || defaultDeliveryInfo;
             categories = data.categories ? JSON.parse(data.categories) : defaultCategories;
             collections = data.collections ? JSON.parse(data.collections) : defaultCollections;
+            badges = data.badges ? JSON.parse(data.badges) : defaultBadges;
+            socials = data.socials ? JSON.parse(data.socials) : defaultSocials;
         }else{
             catalog = defaultCatalog;
             deliveryInfo = defaultDeliveryInfo;
             categories = defaultCategories;
             collections = defaultCollections;
+            badges = defaultBadges;
+            socials = defaultSocials;
             await storeDocRef.set({
                 products: JSON.stringify(defaultCatalog),
                 deliveryInfo: defaultDeliveryInfo,
                 categories: JSON.stringify(defaultCategories),
-                collections: JSON.stringify(defaultCollections)
+                collections: JSON.stringify(defaultCollections),
+                badges: JSON.stringify(defaultBadges),
+                socials: JSON.stringify(defaultSocials)
             });
         }
     }catch(e){
@@ -1099,12 +1189,16 @@ async function loadData(){
         deliveryInfo = defaultDeliveryInfo;
         categories = defaultCategories;
         collections = defaultCollections;
+        badges = defaultBadges;
+        socials = defaultSocials;
         showToast("⚠️ Connexion à la base impossible (vérifie les règles Firestore)", true);
     }
     nextProductId = catalog.reduce((max,p)=>Math.max(max,p.id),0) + 1;
+    nextSocialId = socials.reduce((max,s)=>Math.max(max,s.id),0) + 1;
     document.getElementById("delivery-info-text").innerText = deliveryInfo;
     populateFilterOptions();
     renderProducts();
+    renderSocials();
 }
 
 async function persistCatalog(){
@@ -1122,8 +1216,20 @@ async function persistTaxonomy(){
     try{
         await storeDocRef.set({
             categories: JSON.stringify(categories),
-            collections: JSON.stringify(collections)
+            collections: JSON.stringify(collections),
+            badges: JSON.stringify(badges)
         }, { merge: true });
+        return true;
+    }catch(e){
+        console.error(e);
+        showToast("⚠️ Erreur d'enregistrement, réessaie", true);
+        return false;
+    }
+}
+
+async function persistSocials(){
+    try{
+        await storeDocRef.set({ socials: JSON.stringify(socials) }, { merge: true });
         return true;
     }catch(e){
         console.error(e);
@@ -1232,7 +1338,7 @@ function setupModalMedia(){
     const mediaContainer = document.getElementById("modal-media-container");
     const thumbContainer = document.getElementById("modal-thumbnails");
 
-    mediaContainer.innerHTML = `<div class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></div>`;
+    mediaContainer.innerHTML = `<div class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></div><div class="modal-zoom-hint"><i class="fas fa-expand"></i></div>`;
     thumbContainer.innerHTML = "";
 
     selectedProduct.media.forEach((item, index) => {
@@ -1246,6 +1352,7 @@ function setupModalMedia(){
             const img = document.createElement("img");
             img.src = item.url;
             img.className = index === 0 ? "active-media" : "";
+            img.onclick = () => openLightbox(item.url, "img");
             mediaContainer.appendChild(img);
         }
 
@@ -1513,6 +1620,78 @@ function toggleLike(element){
 }
 
 /* =========================================================
+   PAGE RÉSEAUX — rendu dynamique depuis la base
+   ========================================================= */
+const SOCIAL_STYLES = {
+    telegram:  { icon:"fab fa-telegram-plane", cls:"tg",      actionLabel:"Rejoindre" },
+    instagram: { icon:"fab fa-instagram",      cls:"ig",      actionLabel:"Suivre" },
+    tiktok:    { icon:"fab fa-tiktok",         cls:"tiktok",  actionLabel:"Suivre" },
+    snapchat:  { icon:"fab fa-snapchat",       cls:"snap",    actionLabel:"Ajouter" },
+    autre:     { icon:"fas fa-globe",          cls:"other",   actionLabel:"Ouvrir le lien" }
+};
+
+function renderSocials(){
+    const container = document.getElementById("reels-container");
+    container.innerHTML = "";
+
+    if(!socials.length){
+        container.innerHTML = `<div style="text-align:center; padding:30px 15px; color:var(--muted);">Aucun réseau ajouté pour le moment.</div>`;
+        return;
+    }
+
+    socials.forEach(social=>{
+        const style = SOCIAL_STYLES[social.network] || SOCIAL_STYLES.autre;
+        const mediaTag = social.media?.type === "video"
+            ? `<video src="${social.media.url}" autoplay muted loop playsinline></video>`
+            : `<img src="${social.media?.url || ''}" alt="${social.title}">`;
+
+        const card = document.createElement("div");
+        card.className = "reel-card";
+        card.innerHTML = `
+            <div class="reel-media-box">
+                ${social.badge ? `<span class="reel-badge">${social.badge}</span>` : ""}
+                ${mediaTag}
+            </div>
+            <div class="reel-body">
+                <div class="reel-profile-row">
+                    <div class="reel-avatar-ring">
+                        <div class="reel-avatar-inner ${style.cls}"><i class="${style.icon}"></i></div>
+                    </div>
+                    <div class="reel-meta">
+                        <h3 class="gta-font">${social.title}</h3>
+                        <p>${social.subtitle || ""}</p>
+                    </div>
+                </div>
+                <p class="reel-text">${social.text || ""}</p>
+                <a href="${social.url}" target="_blank" class="reel-action-btn ${style.cls} gta-font">
+                    <i class="${style.icon}"></i> ${style.actionLabel}
+                </a>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+/* =========================================================
+   LIGHTBOX — visualisation plein écran des médias produits
+   ========================================================= */
+function openLightbox(url, type){
+    const content = document.getElementById("lightbox-content");
+    content.innerHTML = type === "video"
+        ? `<video src="${url}" controls autoplay playsinline></video>`
+        : `<img src="${url}">`;
+    document.getElementById("lightbox-overlay").classList.add("show");
+    if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
+}
+function closeLightbox(event){
+    if(event) event.stopPropagation();
+    const overlay = document.getElementById("lightbox-overlay");
+    overlay.classList.remove("show");
+    overlay.querySelectorAll("video").forEach(v=>v.pause());
+    document.getElementById("lightbox-content").innerHTML = "";
+}
+
+/* =========================================================
    PANNEAU ADMIN — gestion produits & médias
    ========================================================= */
 let adminEditingId = null; // null = ajout, sinon id du produit édité
@@ -1549,7 +1728,7 @@ function openAdminEdit(id){
     document.getElementById("admin-edit-title").innerText = product ? "MODIFIER LE PRODUIT" : "AJOUTER UN PRODUIT";
     document.getElementById("ae-title").value = product?.title || "";
     populateAdminEditTaxonomySelects(product?.category || "", product?.collection || "");
-    document.getElementById("ae-badge").value = product?.badge || "";
+    populateAdminEditBadgeSelect(product?.badge || "");
     document.getElementById("ae-desc").value = product?.desc || "";
 
     adminEditSizes = product ? JSON.parse(JSON.stringify(product.sizes)) : [{label:"S", price:20},{label:"M", price:20},{label:"L", price:22},{label:"XL", price:22}];
@@ -1659,6 +1838,14 @@ function populateAdminEditTaxonomySelects(currentCategory, currentCollection){
         ? colOptions.map(c=>`<option value="${c}">${c}</option>`).join("")
         : `<option value="">Aucune collection créée</option>`;
     colSelect.value = currentCollection || colOptions[0] || "";
+}
+
+function populateAdminEditBadgeSelect(currentBadge){
+    const badgeSelect = document.getElementById("ae-badge");
+    let options = badges.map(b=>b.label);
+    if(currentBadge && !options.includes(currentBadge)) options.push(currentBadge);
+    badgeSelect.innerHTML = `<option value="">Aucune</option>` + options.map(l=>`<option value="${l}">${l}</option>`).join("");
+    badgeSelect.value = currentBadge || "";
 }
 
 function renderAdminCategories(){
@@ -1812,7 +1999,7 @@ async function saveProductFromAdmin(){
     if(!adminEditMedia.length){ showToast("⚠️ Ajoute au moins une photo", true); return; }
 
     const badge = document.getElementById("ae-badge").value;
-    const badgeClassMap = { "PROMO":"badge-promo", "TOP":"badge-top", "VIDÉO":"badge-video", "NOUVEAU":"badge-promo" };
+    const badgeObj = badges.find(b=>b.label === badge);
 
     const productData = {
         id: adminEditingId || nextProductId,
@@ -1820,7 +2007,7 @@ async function saveProductFromAdmin(){
         category: document.getElementById("ae-category").value.trim(),
         collection: document.getElementById("ae-collection").value.trim(),
         badge,
-        badgeClass: badgeClassMap[badge] || "",
+        badgeClass: badgeObj ? badgeObj.colorClass : "",
         desc: document.getElementById("ae-desc").value.trim(),
         sizes: adminEditSizes.filter(s=>s.label),
         media: adminEditMedia
@@ -1853,6 +2040,255 @@ async function deleteAdminProduct(id){
         renderProducts();
         renderAdminProducts();
         showToast("🗑️ Produit supprimé");
+    }
+}
+
+/* =========================================================
+   ADMIN — gestion des étiquettes produits
+   ========================================================= */
+function renderAdminBadges(){
+    const list = document.getElementById("admin-badges-list");
+    list.innerHTML = "";
+    if(!badges.length){
+        list.innerHTML = `<div class="admin-hint">Aucune étiquette pour le moment.</div>`;
+        return;
+    }
+    const colorOptions = [
+        { value:"badge-promo", label:"Rose" },
+        { value:"badge-video", label:"Cyan" },
+        { value:"badge-top", label:"Jaune" },
+        { value:"badge-new", label:"Vert" },
+        { value:"badge-purple", label:"Violet" }
+    ];
+    badges.forEach((b, index)=>{
+        const row = document.createElement("div");
+        row.className = "admin-taxonomy-row";
+        row.innerHTML = `
+            <input type="text" value="${b.label}" onchange="renameBadge(${index}, this.value)">
+            <select style="max-width:100px; flex:0 0 auto;" onchange="changeBadgeColor(${index}, this.value)">
+                ${colorOptions.map(c=>`<option value="${c.value}" ${c.value===b.colorClass?'selected':''}>${c.label}</option>`).join("")}
+            </select>
+            <div class="admin-icon-btn danger" onclick="deleteBadge(${index})"><i class="fas fa-trash-can"></i></div>
+        `;
+        list.appendChild(row);
+    });
+}
+
+async function addBadge(){
+    const input = document.getElementById("new-badge-input");
+    const colorSelect = document.getElementById("new-badge-color");
+    const label = input.value.trim();
+    if(!label){ showToast("⚠️ Entre un nom d'étiquette", true); return; }
+    if(badges.some(b=>b.label === label)){ showToast("⚠️ Cette étiquette existe déjà", true); return; }
+    badges.push({ label, colorClass: colorSelect.value });
+    const ok = await persistTaxonomy();
+    if(ok){
+        input.value = "";
+        renderAdminBadges();
+        showToast("✅ Étiquette ajoutée");
+    }
+}
+
+async function renameBadge(index, newValue){
+    const oldValue = badges[index].label;
+    newValue = newValue.trim();
+    if(!newValue || newValue === oldValue){ renderAdminBadges(); return; }
+    if(badges.some(b=>b.label === newValue)){ showToast("⚠️ Ce nom existe déjà", true); renderAdminBadges(); return; }
+
+    badges[index].label = newValue;
+    catalog.forEach(p=>{ if(p.badge === oldValue) p.badge = newValue; });
+
+    const ok = await persistTaxonomy() && await persistCatalog();
+    if(ok){
+        renderProducts();
+        renderAdminProducts();
+        showToast("✅ Étiquette modifiée");
+    }
+}
+
+async function changeBadgeColor(index, newColorClass){
+    const label = badges[index].label;
+    badges[index].colorClass = newColorClass;
+    catalog.forEach(p=>{ if(p.badge === label) p.badgeClass = newColorClass; });
+
+    const ok = await persistTaxonomy() && await persistCatalog();
+    if(ok){
+        renderProducts();
+        renderAdminProducts();
+        showToast("✅ Couleur mise à jour");
+    }
+}
+
+async function deleteBadge(index){
+    const label = badges[index].label;
+    const inUse = catalog.some(p=>p.badge === label);
+    const message = inUse
+        ? `Supprimer "${label}" ? Les produits concernés n'auront plus d'étiquette.`
+        : `Supprimer l'étiquette "${label}" ?`;
+    if(!confirm(message)) return;
+
+    badges.splice(index,1);
+    catalog.forEach(p=>{ if(p.badge === label){ p.badge = ""; p.badgeClass = ""; } });
+
+    const ok = await persistTaxonomy() && await persistCatalog();
+    if(ok){
+        renderProducts();
+        renderAdminProducts();
+        renderAdminBadges();
+        showToast("🗑️ Étiquette supprimée");
+    }
+}
+
+/* =========================================================
+   ADMIN — gestion des réseaux sociaux
+   ========================================================= */
+let socialEditingId = null;
+let socialEditMedia = null;
+
+function renderAdminSocials(){
+    const list = document.getElementById("admin-socials-list");
+    list.innerHTML = "";
+    if(!socials.length){
+        list.innerHTML = `<div class="admin-hint">Aucun réseau ajouté pour le moment.</div>`;
+        return;
+    }
+    socials.forEach(social=>{
+        const row = document.createElement("div");
+        row.className = "admin-product-row";
+        row.innerHTML = `
+            <img src="${social.media?.url || ''}" alt="">
+            <div class="info">
+                <h4>${social.title}</h4>
+                <p>${social.network} · ${social.url}</p>
+            </div>
+            <div class="admin-icon-btn" onclick="openSocialEdit(${social.id})"><i class="fas fa-pen"></i></div>
+            <div class="admin-icon-btn danger" onclick="deleteAdminSocial(${social.id})"><i class="fas fa-trash-can"></i></div>
+        `;
+        list.appendChild(row);
+    });
+}
+
+function openSocialEdit(id){
+    socialEditingId = id;
+    const social = id ? socials.find(s=>s.id===id) : null;
+
+    document.getElementById("se-edit-title").innerText = social ? "MODIFIER LE RÉSEAU" : "AJOUTER UN RÉSEAU";
+    document.getElementById("se-network").value = social?.network || "telegram";
+    document.getElementById("se-badge").value = social?.badge || "";
+    document.getElementById("se-title").value = social?.title || "";
+    document.getElementById("se-subtitle").value = social?.subtitle || "";
+    document.getElementById("se-text").value = social?.text || "";
+    document.getElementById("se-url").value = social?.url || "";
+
+    socialEditMedia = social?.media ? { ...social.media } : null;
+    renderSocialMediaPreview();
+    document.getElementById("admin-edit-social-modal").style.display = "flex";
+}
+
+function closeSocialEdit(){
+    document.getElementById("admin-edit-social-modal").style.display = "none";
+}
+
+function renderSocialMediaPreview(){
+    const container = document.getElementById("se-media-preview");
+    if(!socialEditMedia){
+        container.innerHTML = `<div class="admin-hint">Aucun média sélectionné.</div>`;
+        return;
+    }
+    const preview = socialEditMedia.type === "video"
+        ? `<video class="thumb" src="${socialEditMedia.url}" muted></video>`
+        : `<img class="thumb" src="${socialEditMedia.url}">`;
+    container.innerHTML = `
+        <div class="admin-media-row">
+            ${preview}
+            <span>${socialEditMedia.type === "video" ? "🎬 Vidéo" : "🖼️ Image"}</span>
+            <div class="admin-icon-btn danger" onclick="clearSocialMedia()"><i class="fas fa-xmark"></i></div>
+        </div>
+    `;
+}
+
+function clearSocialMedia(){
+    socialEditMedia = null;
+    renderSocialMediaPreview();
+}
+
+function setSocialMediaFromUrl(){
+    const input = document.getElementById("se-media-url");
+    const url = input.value.trim();
+    if(!url) return;
+    const isVideo = /\.(mp4|webm|mov)(\?.*)?$/i.test(url) || url.includes("video");
+    socialEditMedia = { type: isVideo ? "video" : "img", url };
+    input.value = "";
+    renderSocialMediaPreview();
+}
+
+function setSocialMediaFromGallery(event){
+    const file = event.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+        const img = new Image();
+        img.onload = ()=>{
+            const maxWidth = 900;
+            const scale = Math.min(1, maxWidth / img.width);
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.78);
+            socialEditMedia = { type:"img", url: dataUrl };
+            renderSocialMediaPreview();
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
+}
+
+async function saveSocialFromAdmin(){
+    const title = document.getElementById("se-title").value.trim();
+    const url = document.getElementById("se-url").value.trim();
+    if(!title){ showToast("⚠️ Le titre est obligatoire", true); return; }
+    if(!url){ showToast("⚠️ Le lien est obligatoire", true); return; }
+    if(!socialEditMedia){ showToast("⚠️ Ajoute une image ou une vidéo", true); return; }
+
+    const socialData = {
+        id: socialEditingId || nextSocialId,
+        network: document.getElementById("se-network").value,
+        badge: document.getElementById("se-badge").value.trim(),
+        title,
+        subtitle: document.getElementById("se-subtitle").value.trim(),
+        text: document.getElementById("se-text").value.trim(),
+        url,
+        media: socialEditMedia
+    };
+
+    if(socialEditingId){
+        const idx = socials.findIndex(s=>s.id===socialEditingId);
+        if(idx > -1) socials[idx] = socialData;
+    }else{
+        socials.push(socialData);
+        nextSocialId++;
+    }
+
+    const ok = await persistSocials();
+    if(ok){
+        closeSocialEdit();
+        renderSocials();
+        renderAdminSocials();
+        showToast(socialEditingId ? "✅ Réseau modifié" : "✅ Réseau ajouté");
+    }
+}
+
+async function deleteAdminSocial(id){
+    if(!confirm("Supprimer définitivement ce réseau ?")) return;
+    socials = socials.filter(s=>s.id !== id);
+    const ok = await persistSocials();
+    if(ok){
+        renderSocials();
+        renderAdminSocials();
+        showToast("🗑️ Réseau supprimé");
     }
 }
 
