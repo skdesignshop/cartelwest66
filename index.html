@@ -313,6 +313,32 @@ body{
 }
 .form-submit-btn:active { transform: scale(0.96); }
 
+/* MODAL DE SECOURS COMMANDE (COPIER / ENVOYER) */
+.order-success-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter:blur(15px);
+    z-index: 700; display: none; align-items: center; justify-content: center; padding: 20px;
+    animation: fadeIn .25s ease;
+}
+.order-success-card {
+    width: 100%; max-width: 380px; background: rgba(12, 15, 29, 0.98); border: 1px solid var(--green);
+    border-radius: 24px; padding: 24px; text-align: center; box-shadow: 0 0 40px rgba(0,255,157,0.25);
+}
+.order-success-card i { font-size: 2.5rem; color: var(--green); margin-bottom: 12px; filter: drop-shadow(0 0 10px var(--green)); }
+.order-success-card h3 { font-size: 1.3rem; margin-bottom: 8px; color: var(--white); }
+.order-success-card p { font-size: 0.825rem; color: var(--muted); margin-bottom: 16px; line-height: 1.4; }
+.order-text-box {
+    background: rgba(3, 5, 10, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;
+    padding: 12px; font-size: 0.78rem; color: #d0d4e4; text-align: left; max-height: 140px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-all; margin-bottom: 16px; font-family: monospace;
+}
+.order-modal-btn {
+    width: 100%; padding: 13px; border: none; border-radius: 12px; font-weight: 900; font-size: 0.95rem;
+    cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; transition: .2s;
+}
+.order-modal-btn.primary { background: var(--green); color: var(--black); box-shadow: 0 0 15px rgba(0,255,157,0.3); }
+.order-modal-btn.secondary { background: rgba(255,255,255,0.08); color: white; border: 1px solid rgba(255,255,255,0.15); }
+.order-modal-btn:active { transform: scale(0.96); }
+
 /* PAGE RÉSEAUX & FEED */
 .reels-container { padding: 15px; display: flex; flex-direction: column; gap: 18px; }
 .reel-card {
@@ -697,6 +723,24 @@ body{
     </div>
 </section>
 
+<!-- ================= MODAL DE SECOURS COMMANDE (COPIER / ENVOYER) ================= -->
+<div class="order-success-overlay" id="order-success-modal">
+    <div class="order-success-card">
+        <i class="fas fa-circle-check"></i>
+        <h3 class="gta-font">COMMANDE PRÊTE !</h3>
+        <p>Si ton message ne s'est pas pré-rempli automatiquement dans Telegram, copie ton récapitulatif ci-dessous et envoie-le directement à <strong style="color:var(--cyan)">@cartelwest</strong> :</p>
+        
+        <div class="order-text-box" id="order-text-content"></div>
+
+        <button class="order-modal-btn primary gta-font" onclick="copyOrderAndOpenChat()">
+            <i class="fas fa-copy"></i> Copier & Envoyer au vendeur
+        </button>
+        <button class="order-modal-btn secondary gta-font" onclick="closeOrderSuccessModal()">
+            Fermer
+        </button>
+    </div>
+</div>
+
 <!-- ================= PAGE RÉSEAUX & FEED ================= -->
 <section id="view-socials" class="view">
     <h1 class="page-title gta-font">
@@ -1022,7 +1066,7 @@ const defaultBadges = [
 const defaultSocials = [
     {
         id:1, network:"telegram", badge:"OFFICIEL", title:"Canal Telegram", subtitle:"Communauté principale",
-        text:"Rejoins nosso canal pour ne rien rater des nouvelles collections, des drops en exclusivité et des codes promos.",
+        text:"Rejoins notre canal pour ne rien rater des nouvelles collections, des drops en exclusivité et des codes promos.",
         url:"https://t.me/CartelWest66",
         media:{ type:"video", url:"https://www.w3schools.com/html/mov_bbb.mp4" }
     },
@@ -1256,6 +1300,7 @@ let currentView = "home";
 let selectedProduct = null;
 let selectedSizeIndex = 0;
 let userOrdersCount = 0;
+let lastGeneratedOrderText = "";
 
 const grid = document.getElementById("products-container");
 const search = document.getElementById("search-input");
@@ -1554,12 +1599,36 @@ function buildOrderMessage(order){
 
 function openOrderChat(orderData){
     const text = buildOrderMessage(orderData);
+    lastGeneratedOrderText = text;
     const url = `https://t.me/${ORDERS_USERNAME}?text=${encodeURIComponent(text)}`;
-    if(tg?.openTelegramLink){
-        tg.openTelegramLink(url);
+    
+    // Affichage de la modale de secours au cas où le pré-remplissage est bloqué
+    document.getElementById("order-text-content").innerText = text;
+    document.getElementById("order-success-modal").style.display = "flex";
+
+    if(window.Telegram?.WebApp?.openTelegramLink){
+        window.Telegram.WebApp.openTelegramLink(url);
     } else {
         window.open(url, "_blank");
     }
+}
+
+function copyOrderAndOpenChat(){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(lastGeneratedOrderText).then(()=>{
+            showToast("📋 Commande copiée ! Colle-la dans la discussion.");
+        }).catch(()=>{});
+    }
+    const url = `https://t.me/${ORDERS_USERNAME}?text=${encodeURIComponent(lastGeneratedOrderText)}`;
+    if(window.Telegram?.WebApp?.openTelegramLink){
+        window.Telegram.WebApp.openTelegramLink(url);
+    } else {
+        window.open(url, "_blank");
+    }
+}
+
+function closeOrderSuccessModal(){
+    document.getElementById("order-success-modal").style.display = "none";
 }
 
 function submitOrder(){
@@ -1594,7 +1663,6 @@ function submitOrder(){
     if(tg?.sendData){
         try{ tg.sendData(JSON.stringify(orderData)); }catch(e){}
     }
-    showToast("📨 Ouvre la conversation Telegram et appuie sur Envoyer pour valider ta commande !");
 }
 
 function updateLoyaltyStats(spentAmount){
