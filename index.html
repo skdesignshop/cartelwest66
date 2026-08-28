@@ -988,7 +988,7 @@ document.getElementById("client-name").value = `${user.first_name || ""} ${user.
    VARIABLES POUR LES COMMANDES (TELEGRAM & SIGNAL)
    ========================================================= */
 const ORDERS_USERNAME = "cartelwest"; // Nom Telegram (sans le @)
-const SIGNAL_PHONE = "+33776437156"; // <-- Renseigne ton numéro Signal ici (avec +33)
+const SIGNAL_PHONE = "+33776437156"; // Tu peux le laisser tel quel ou le lier à tes réseaux si besoin
 
 /* =========================================================
    CATALOGUE PAR DÉFAUT (utilisé uniquement si la base est vide)
@@ -1540,7 +1540,7 @@ function buildOrderMessage(order){
         `💰 Total : ${order.totalPrice.toFixed(2)}€`;
 }
 
-function submitOrder(platform){
+function submitOrder(platform) {
     const name = document.getElementById("client-name").value.trim();
     const phone = document.getElementById("client-phone").value.trim();
     const address = document.getElementById("client-address").value.trim();
@@ -1564,23 +1564,33 @@ function submitOrder(platform){
     updateLoyaltyStats(total);
 
     const text = buildOrderMessage(orderData);
+    let finalUrl = "";
 
     if (platform === 'telegram') {
-        const url = `https://t.me/${ORDERS_USERNAME}?text=${encodeURIComponent(text)}`;
-        if (tg && tg.openLink) {
-            tg.openLink(url);
-        } else {
-            window.location.href = url;
-        }
+        // On utilise l'URL t.me classique avec le texte encodé
+        finalUrl = `https://t.me/${ORDERS_USERNAME}?text=${encodeURIComponent(text)}`;
     } else if (platform === 'signal') {
-        const url = `https://signal.me/#p/${SIGNAL_PHONE}`;
-        if (tg && tg.openLink) {
-            tg.openLink(url);
-        } else {
-            window.location.href = url;
+        // Lien Signal
+        finalUrl = `https://signal.me/#p/${SIGNAL_PHONE}`;
+        try {
+            navigator.clipboard.writeText(text);
+            showToast("📋 Texte copié ! Colle-le dans Signal.");
+        } catch (e) {
+            console.log("Copie automatique impossible");
         }
     }
 
+    // LE HACK : Création d'un lien HTML invisible cliqué par le code
+    // Cela sort de l'iframe de la WebApp et force le téléphone à ouvrir l'application externe avec tous les paramètres
+    const a = document.createElement("a");
+    a.href = finalUrl;
+    a.target = "_blank"; // Force l'ouverture hors de la WebApp
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Réinitialisation du panier
     cart = [];
     updateCart();
     switchView("home");
