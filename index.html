@@ -1556,13 +1556,16 @@ function openOrderChat(orderData){
     const text = buildOrderMessage(orderData);
     const url = `https://t.me/${ORDERS_USERNAME}?text=${encodeURIComponent(text)}`;
     
-    // Ferme la Mini App pour basculer directement sur le chat Telegram
-    if(window.Telegram?.WebApp?.close){
-        window.Telegram.WebApp.close();
+    // Utilisation de openTelegramLink sans fermer l'app brutalement pour garder le pré-remplissage
+    if(tg && tg.openTelegramLink){
+        try{
+            tg.openTelegramLink(url);
+        }catch(e){
+            window.open(url, "_blank");
+        }
+    }else{
+        window.open(url, "_blank");
     }
-    
-    // Ouvre la discussion
-    window.open(url, "_blank");
 }
 
 function submitOrder(){
