@@ -1567,27 +1567,23 @@ function submitOrder(platform){
 
     if (platform === 'telegram') {
         const url = `https://t.me/${ORDERS_USERNAME}?text=${encodeURIComponent(text)}`;
-        if(tg && tg.openTelegramLink){
-            try{ tg.openTelegramLink(url); }catch(e){ window.open(url, "_blank"); }
-        }else{
-            window.open(url, "_blank");
+        if (tg && tg.openLink) {
+            tg.openLink(url);
+        } else {
+            window.location.href = url;
         }
     } else if (platform === 'signal') {
-        // Pour Signal : Copie dans le presse papier, notifie l'utilisateur, puis ouvre Signal
-        navigator.clipboard.writeText(text).then(() => {
-            showToast("📋 Commande copiée ! Colle-la dans Signal.");
-            setTimeout(() => {
-                window.open(`https://signal.me/#p/${SIGNAL_PHONE}`, "_blank");
-            }, 1500);
-        }).catch(err => {
-            showToast("⚠️ Impossible de copier automatiquement, copie à la main !", true);
-        });
+        const url = `https://signal.me/#p/${SIGNAL_PHONE}`;
+        if (tg && tg.openLink) {
+            tg.openLink(url);
+        } else {
+            window.location.href = url;
+        }
     }
 
     cart = [];
     updateCart();
     switchView("home");
-    // tg.sendData retiré pour ne pas forcer la fermeture !
 }
 
 function updateLoyaltyStats(spentAmount){
