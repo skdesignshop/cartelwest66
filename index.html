@@ -304,14 +304,22 @@ body{
 }
 .cart-checkout-btn:active { transform: scale(0.96); }
 
-/* BOUTON DE CONFIRMATION FORMULAIRE */
+/* BOUTONS DE CONFIRMATION FORMULAIRE */
 .form-submit-btn {
-    width: 100%; padding: 16px; margin-top: 10px; background: linear-gradient(135deg, var(--green), #00b36b);
-    border: none; border-radius: 14px; color: var(--black); font-weight: 900; font-size: 1.1rem;
-    cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px;
-    box-shadow: 0 0 25px rgba(0, 255, 157, 0.4); transition: 0.2s;
+    width: 100%; padding: 16px; margin-top: 10px; border: none; border-radius: 14px; color: white; 
+    font-weight: 900; font-size: 1.05rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+    transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;
 }
 .form-submit-btn:active { transform: scale(0.96); }
+
+.tg-btn { 
+    background: linear-gradient(135deg, #229ed9, #1b85b8); 
+    box-shadow: 0 0 25px rgba(34, 158, 217, 0.4); 
+}
+.signal-btn { 
+    background: linear-gradient(135deg, #3a76f0, #2c5bb8); 
+    box-shadow: 0 0 25px rgba(58, 118, 240, 0.4); 
+}
 
 /* PAGE RÉSEAUX & FEED */
 .reels-container { padding: 15px; display: flex; flex-direction: column; gap: 18px; }
@@ -691,8 +699,12 @@ body{
             <input id="client-notes" type="text" placeholder="Informations supplémentaires">
         </div>
 
-        <button class="form-submit-btn gta-font" onclick="submitOrder()">
-            <i class="fas fa-paper-plane"></i> Valider et envoyer la commande
+        <!-- NOUVEAUX BOUTONS DE PAIEMENT (TELEGRAM & SIGNAL) -->
+        <button class="form-submit-btn tg-btn gta-font" onclick="submitOrder('telegram')">
+            <i class="fab fa-telegram-plane"></i> Commander via Telegram
+        </button>
+        <button class="form-submit-btn signal-btn gta-font" onclick="submitOrder('signal')">
+            <i class="fas fa-comment-dots"></i> Commander via Signal
         </button>
     </div>
 </section>
@@ -973,6 +985,12 @@ document.getElementById("avatar-initial").innerText = userName.charAt(0).toUpper
 document.getElementById("client-name").value = `${user.first_name || ""} ${user.last_name || ""}`.trim();
 
 /* =========================================================
+   VARIABLES POUR LES COMMANDES (TELEGRAM & SIGNAL)
+   ========================================================= */
+const ORDERS_USERNAME = "cartelwest"; // Nom Telegram (sans le @)
+const SIGNAL_PHONE = "+33776437156"; // <-- Renseigne ton numéro Signal ici (avec +33)
+
+/* =========================================================
    CATALOGUE PAR DÉFAUT (utilisé uniquement si la base est vide)
    ========================================================= */
 const defaultCatalog = [
@@ -992,22 +1010,6 @@ const defaultCatalog = [
         media: [
             { type:"img", url:"https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=700" }
         ]
-    },
-    {
-        id:3, title:"Original Vintage Tee", category:"Basique", collection:"Original", badge:"", badgeClass:"",
-        desc:"Coupe classique délavée façon vintage, tissu doux et respirant.",
-        sizes: [ {label:"S", price:20}, {label:"M", price:20}, {label:"L", price:22}, {label:"XL", price:22} ],
-        media: [
-            { type:"img", url:"https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?w=700" }
-        ]
-    },
-    {
-        id:4, title:"Night Drop Tee", category:"Nouveauté", collection:"Urban", badge:"NOUVEAU", badgeClass:"badge-new",
-        desc:"Dernière sortie de la saison, imprimé exclusif édition limitée.",
-        sizes: [ {label:"S", price:28}, {label:"M", price:28}, {label:"L", price:30}, {label:"XL", price:32} ],
-        media: [
-            { type:"img", url:"https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=700" }
-        ]
     }
 ];
 const defaultDeliveryInfo = "Livraison à Perpignan et ses alentours. Contacte-nous pour connaître les délais actuels.";
@@ -1022,15 +1024,9 @@ const defaultBadges = [
 const defaultSocials = [
     {
         id:1, network:"telegram", badge:"OFFICIEL", title:"Canal Telegram", subtitle:"Communauté principale",
-        text:"Rejoins notre canal pour ne rien rater des nouvelles collections, des drops en exclusivité et des codes promos.",
+        text:"Rejoins notre canal pour ne rien rater des nouvelles collections.",
         url:"https://t.me/CartelWest66",
         media:{ type:"video", url:"https://www.w3schools.com/html/mov_bbb.mp4" }
-    },
-    {
-        id:2, network:"instagram", badge:"LOOKBOOK", title:"Instagram", subtitle:"Photos & avis clients",
-        text:"Découvre les visuels des t-shirts en haute qualité, les portés de la communauté et les nouveautés en story.",
-        url:"https://instagram.com/",
-        media:{ type:"img", url:"https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=700" }
     }
 ];
 
@@ -1038,7 +1034,6 @@ const defaultSocials = [
    ADMIN — geste secret + PIN (jamais visible pour les autres)
    ========================================================= */
 const ADMIN_PIN = "2468"; // <-- Change ce code avant de publier ta mini app
-const ORDERS_USERNAME = "cartelwest"; // <-- Nom d'utilisateur Telegram (sans le @) qui recevra les commandes
 let isAdminUnlocked = false;
 let tapCount = 0;
 let tapTimer = null;
@@ -1139,7 +1134,7 @@ function lockAdmin(){
 }
 
 /* =========================================================
-   BASE DE DONNÉES — Firebase Firestore (persiste pour de vrai, accessible depuis GitHub)
+   BASE DE DONNÉES — Firebase Firestore
    ========================================================= */
 const firebaseConfig = {
   apiKey: "AIzaSyBRGU3D-snPS6ZijQZuXA-VVd_OeunHc5E",
@@ -1190,14 +1185,13 @@ async function loadData(){
             });
         }
     }catch(e){
-        console.error("Erreur de connexion à Firebase :", e);
+        console.error("Erreur Firebase :", e);
         catalog = defaultCatalog;
         deliveryInfo = defaultDeliveryInfo;
         categories = defaultCategories;
         collections = defaultCollections;
         badges = defaultBadges;
         socials = defaultSocials;
-        showToast("⚠️ Connexion à la base impossible (vérifie les règles Firestore)", true);
     }
     nextProductId = catalog.reduce((max,p)=>Math.max(max,p.id),0) + 1;
     nextSocialId = socials.reduce((max,s)=>Math.max(max,s.id),0) + 1;
@@ -1212,7 +1206,6 @@ async function persistCatalog(){
         await storeDocRef.set({ products: JSON.stringify(catalog) }, { merge: true });
         return true;
     }catch(e){
-        console.error(e);
         showToast("⚠️ Erreur d'enregistrement, réessaie", true);
         return false;
     }
@@ -1227,8 +1220,7 @@ async function persistTaxonomy(){
         }, { merge: true });
         return true;
     }catch(e){
-        console.error(e);
-        showToast("⚠️ Erreur d'enregistrement, réessaie", true);
+        showToast("⚠️ Erreur d'enregistrement", true);
         return false;
     }
 }
@@ -1238,8 +1230,7 @@ async function persistSocials(){
         await storeDocRef.set({ socials: JSON.stringify(socials) }, { merge: true });
         return true;
     }catch(e){
-        console.error(e);
-        showToast("⚠️ Erreur d'enregistrement, réessaie", true);
+        showToast("⚠️ Erreur d'enregistrement", true);
         return false;
     }
 }
@@ -1522,10 +1513,8 @@ function updateMainButton(){
     } else if(currentView==="cart" && cart.length){
         tg.MainButton.setText("CONTINUER VERS LA LIVRAISON");
         tg.MainButton.color = "#ff007f"; tg.MainButton.textColor = "#ffffff"; tg.MainButton.show();
-    } else if(currentView==="checkout"){
-        tg.MainButton.setText("CONFIRMER LA COMMANDE");
-        tg.MainButton.color = "#00ff9d"; tg.MainButton.textColor = "#030408"; tg.MainButton.show();
     } else {
+        // On cache le main button sur Checkout pour les forcer à choisir entre Telegram ou Signal
         tg.MainButton.hide();
     }
     tg.MainButton.onClick(handleMainButton);
@@ -1534,7 +1523,6 @@ function updateMainButton(){
 function handleMainButton(){
     if(currentView==="home") switchView("cart");
     else if(currentView==="cart") switchView("checkout");
-    else if(currentView==="checkout") submitOrder();
 }
 
 function buildOrderMessage(order){
@@ -1552,23 +1540,7 @@ function buildOrderMessage(order){
         `💰 Total : ${order.totalPrice.toFixed(2)}€`;
 }
 
-function openOrderChat(orderData){
-    const text = buildOrderMessage(orderData);
-    const url = `https://t.me/${ORDERS_USERNAME}?text=${encodeURIComponent(text)}`;
-    
-    // Utilisation de openTelegramLink sans fermer l'app brutalement pour garder le pré-remplissage
-    if(tg && tg.openTelegramLink){
-        try{
-            tg.openTelegramLink(url);
-        }catch(e){
-            window.open(url, "_blank");
-        }
-    }else{
-        window.open(url, "_blank");
-    }
-}
-
-function submitOrder(){
+function submitOrder(platform){
     const name = document.getElementById("client-name").value.trim();
     const phone = document.getElementById("client-phone").value.trim();
     const address = document.getElementById("client-address").value.trim();
@@ -1591,15 +1563,31 @@ function submitOrder(){
     userOrdersCount++;
     updateLoyaltyStats(total);
 
-    openOrderChat(orderData);
+    const text = buildOrderMessage(orderData);
+
+    if (platform === 'telegram') {
+        const url = `https://t.me/${ORDERS_USERNAME}?text=${encodeURIComponent(text)}`;
+        if(tg && tg.openTelegramLink){
+            try{ tg.openTelegramLink(url); }catch(e){ window.open(url, "_blank"); }
+        }else{
+            window.open(url, "_blank");
+        }
+    } else if (platform === 'signal') {
+        // Pour Signal : Copie dans le presse papier, notifie l'utilisateur, puis ouvre Signal
+        navigator.clipboard.writeText(text).then(() => {
+            showToast("📋 Commande copiée ! Colle-la dans Signal.");
+            setTimeout(() => {
+                window.open(`https://signal.me/#p/${SIGNAL_PHONE}`, "_blank");
+            }, 1500);
+        }).catch(err => {
+            showToast("⚠️ Impossible de copier automatiquement, copie à la main !", true);
+        });
+    }
 
     cart = [];
     updateCart();
     switchView("home");
-
-    if(tg?.sendData){
-        try{ tg.sendData(JSON.stringify(orderData)); }catch(e){}
-    }
+    // tg.sendData retiré pour ne pas forcer la fermeture !
 }
 
 function updateLoyaltyStats(spentAmount){
