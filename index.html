@@ -304,7 +304,7 @@ body{
 }
 .cart-checkout-btn:active { transform: scale(0.96); }
 
-/* BOUTONS DE CONFIRMATION FORMULAIRE */
+/* BOUTON DE CONFIRMATION WHATSAPP */
 .form-submit-btn {
     width: 100%; padding: 16px; margin-top: 10px; border: none; border-radius: 14px; color: white; 
     font-weight: 900; font-size: 1.05rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
@@ -312,13 +312,9 @@ body{
 }
 .form-submit-btn:active { transform: scale(0.96); }
 
-.tg-btn { 
-    background: linear-gradient(135deg, #229ed9, #1b85b8); 
-    box-shadow: 0 0 25px rgba(34, 158, 217, 0.4); 
-}
-.signal-btn { 
-    background: linear-gradient(135deg, #3a76f0, #2c5bb8); 
-    box-shadow: 0 0 25px rgba(58, 118, 240, 0.4); 
+.whatsapp-btn { 
+    background: linear-gradient(135deg, #25d366, #128c7e); 
+    box-shadow: 0 0 25px rgba(37, 211, 102, 0.4); 
 }
 
 /* PAGE RÉSEAUX & FEED */
@@ -699,12 +695,9 @@ body{
             <input id="client-notes" type="text" placeholder="Informations supplémentaires">
         </div>
 
-        <!-- NOUVEAUX BOUTONS DE PAIEMENT (TELEGRAM & SIGNAL) -->
-        <button class="form-submit-btn tg-btn gta-font" onclick="submitOrder('telegram')">
-            <i class="fab fa-telegram-plane"></i> Commander via Telegram
-        </button>
-        <button class="form-submit-btn signal-btn gta-font" onclick="submitOrder('signal')">
-            <i class="fas fa-comment-dots"></i> Commander via Signal
+        <!-- BOUTON DE COMMANDE UNIQUE WHATSAPP -->
+        <button class="form-submit-btn whatsapp-btn gta-font" onclick="submitOrder('whatsapp')">
+            <i class="fab fa-whatsapp"></i> Commander via WhatsApp
         </button>
     </div>
 </section>
@@ -752,7 +745,7 @@ body{
         <div class="info-card" style="margin-top:20px;">
             <h3 class="gta-font"><i class="fas fa-star"></i> Avantages</h3>
             <div class="info-line"><i class="fas fa-shield-halved"></i><span>Paiement sécurisé</span></div>
-            <div class="info-line"><i class="fas fa-headset"></i><span>Support Telegram 7j/7</span></div>
+            <div class="info-line"><i class="fas fa-headset"></i><span>Support 7j/7</span></div>
         </div>
     </div>
 </section>
@@ -985,10 +978,9 @@ document.getElementById("avatar-initial").innerText = userName.charAt(0).toUpper
 document.getElementById("client-name").value = `${user.first_name || ""} ${user.last_name || ""}`.trim();
 
 /* =========================================================
-   VARIABLES POUR LES COMMANDES (TELEGRAM & SIGNAL)
+   VARIABLES POUR LA COMMANDE WHATSAPP
    ========================================================= */
-const ORDERS_USERNAME = "cartelwest"; // Nom Telegram (sans le @)
-const SIGNAL_PHONE = "+33776437156"; // Tu peux le laisser tel quel ou le lier à tes réseaux si besoin
+const WHATSAPP_PHONE = "0751701505"; // Numéro WhatsApp demandé
 
 /* =========================================================
    CATALOGUE PAR DÉFAUT (utilisé uniquement si la base est vide)
@@ -1033,7 +1025,7 @@ const defaultSocials = [
 /* =========================================================
    ADMIN — geste secret + PIN (jamais visible pour les autres)
    ========================================================= */
-const ADMIN_PIN = "2468"; // <-- Change ce code avant de publier ta mini app
+const ADMIN_PIN = "2468";
 let isAdminUnlocked = false;
 let tapCount = 0;
 let tapTimer = null;
@@ -1514,7 +1506,6 @@ function updateMainButton(){
         tg.MainButton.setText("CONTINUER VERS LA LIVRAISON");
         tg.MainButton.color = "#ff007f"; tg.MainButton.textColor = "#ffffff"; tg.MainButton.show();
     } else {
-        // On cache le main button sur Checkout pour les forcer à choisir entre Telegram ou Signal
         tg.MainButton.hide();
     }
     tg.MainButton.onClick(handleMainButton);
@@ -1540,7 +1531,7 @@ function buildOrderMessage(order){
         `💰 Total : ${order.totalPrice.toFixed(2)}€`;
 }
 
-function submitOrder(platform) {
+function submitOrder(platform){
     const name = document.getElementById("client-name").value.trim();
     const phone = document.getElementById("client-phone").value.trim();
     const address = document.getElementById("client-address").value.trim();
@@ -1564,33 +1555,16 @@ function submitOrder(platform) {
     updateLoyaltyStats(total);
 
     const text = buildOrderMessage(orderData);
-    let finalUrl = "";
 
-    if (platform === 'telegram') {
-        // On utilise l'URL t.me classique avec le texte encodé
-        finalUrl = `https://t.me/${ORDERS_USERNAME}?text=${encodeURIComponent(text)}`;
-    } else if (platform === 'signal') {
-        // Lien Signal
-        finalUrl = `https://signal.me/#p/${SIGNAL_PHONE}`;
-        try {
-            navigator.clipboard.writeText(text);
-            showToast("📋 Texte copié ! Colle-le dans Signal.");
-        } catch (e) {
-            console.log("Copie automatique impossible");
+    if (platform === 'whatsapp') {
+        const url = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`;
+        if(tg && tg.openTelegramLink){
+            try{ tg.openTelegramLink(url); }catch(e){ window.open(url, "_blank"); }
+        }else{
+            window.open(url, "_blank");
         }
     }
 
-    // LE HACK : Création d'un lien HTML invisible cliqué par le code
-    // Cela sort de l'iframe de la WebApp et force le téléphone à ouvrir l'application externe avec tous les paramètres
-    const a = document.createElement("a");
-    a.href = finalUrl;
-    a.target = "_blank"; // Force l'ouverture hors de la WebApp
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    // Réinitialisation du panier
     cart = [];
     updateCart();
     switchView("home");
@@ -1699,7 +1673,7 @@ function closeLightbox(event){
 /* =========================================================
    PANNEAU ADMIN — gestion produits & médias
    ========================================================= */
-let adminEditingId = null; // null = ajout, sinon id du produit édité
+let adminEditingId = null;
 let adminEditSizes = [];
 let adminEditMedia = [];
 
