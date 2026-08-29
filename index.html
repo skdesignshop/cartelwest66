@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>NEON CITY STORE</title>
+<title>CARTELWEST66</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.cdnfonts.com/css/pricedown" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -304,7 +304,7 @@ body{
 }
 .cart-checkout-btn:active { transform: scale(0.96); }
 
-/* BOUTON DE CONFIRMATION WHATSAPP */
+/* BOUTONS DE CONFIRMATION FORMULAIRE */
 .form-submit-btn {
     width: 100%; padding: 16px; margin-top: 10px; border: none; border-radius: 14px; color: white; 
     font-weight: 900; font-size: 1.05rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
@@ -312,6 +312,10 @@ body{
 }
 .form-submit-btn:active { transform: scale(0.96); }
 
+.tg-btn { 
+    background: linear-gradient(135deg, #229ed9, #1b85b8); 
+    box-shadow: 0 0 25px rgba(34, 158, 217, 0.4); 
+}
 .whatsapp-btn { 
     background: linear-gradient(135deg, #25d366, #128c7e); 
     box-shadow: 0 0 25px rgba(37, 211, 102, 0.4); 
@@ -695,7 +699,10 @@ body{
             <input id="client-notes" type="text" placeholder="Informations supplémentaires">
         </div>
 
-        <!-- BOUTON DE COMMANDE UNIQUE WHATSAPP -->
+        <!-- BOUTONS DE COMMANDE (TELEGRAM & WHATSAPP) -->
+        <button class="form-submit-btn tg-btn gta-font" onclick="submitOrder('telegram')">
+            <i class="fab fa-telegram-plane"></i> Commander via Telegram
+        </button>
         <button class="form-submit-btn whatsapp-btn gta-font" onclick="submitOrder('whatsapp')">
             <i class="fab fa-whatsapp"></i> Commander via WhatsApp
         </button>
@@ -978,9 +985,10 @@ document.getElementById("avatar-initial").innerText = userName.charAt(0).toUpper
 document.getElementById("client-name").value = `${user.first_name || ""} ${user.last_name || ""}`.trim();
 
 /* =========================================================
-   VARIABLES POUR LA COMMANDE WHATSAPP
+   VARIABLES POUR LES COMMANDES (TELEGRAM & WHATSAPP)
    ========================================================= */
-const WHATSAPP_PHONE = "0751701505"; // Numéro WhatsApp demandé
+const ORDERS_USERNAME = "cartelwest"; // Nom Telegram (sans le @)
+const WHATSAPP_PHONE = "33751701505"; // Numéro WhatsApp format international (sans le + pour wa.me)
 
 /* =========================================================
    CATALOGUE PAR DÉFAUT (utilisé uniquement si la base est vide)
@@ -1016,7 +1024,7 @@ const defaultBadges = [
 const defaultSocials = [
     {
         id:1, network:"telegram", badge:"OFFICIEL", title:"Canal Telegram", subtitle:"Communauté principale",
-        text:"Rejoins notre canal pour ne rien rater des nouvelles collections.",
+        text:"Rejoins our canal pour ne rien rater des nouvelles collections.",
         url:"https://t.me/CartelWest66",
         media:{ type:"video", url:"https://www.w3schools.com/html/mov_bbb.mp4" }
     }
@@ -1556,7 +1564,14 @@ function submitOrder(platform){
 
     const text = buildOrderMessage(orderData);
 
-    if (platform === 'whatsapp') {
+    if (platform === 'telegram') {
+        const url = `https://t.me/${ORDERS_USERNAME}?text=${encodeURIComponent(text)}`;
+        if(tg && tg.openTelegramLink){
+            try{ tg.openTelegramLink(url); }catch(e){ window.open(url, "_blank"); }
+        }else{
+            window.open(url, "_blank");
+        }
+    } else if (platform === 'whatsapp') {
         const url = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`;
         if(tg && tg.openTelegramLink){
             try{ tg.openTelegramLink(url); }catch(e){ window.open(url, "_blank"); }
